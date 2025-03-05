@@ -9,33 +9,26 @@ import sendResponse from "../../globalHelperFunction/sendResponse";
 export const getPatient = catchAsync(async (req, res) => {
   const andCondition = getFilterCondition(
     req.query,
-    ["search", "name", "contactNumber", "designation", "registrationNumber","specialties"],
-    ["name", "email", "address", "currentWorkingPlace"],
+    ["search", "name", "email", "address"],
+    ["name", "email", "address"],
     true
   );
 
   const options = pick(req.query, ["limit", "page", "sortBy", "sortOrder"]);
   const { limit, skip, sortBy, sortOrder, page } = calculatePagination(options);
 
-  const result = await prisma.doctor.findMany({
+  const result = await prisma.patient.findMany({
     where: andCondition,
     skip,
     take: limit,
     orderBy: {
       [sortBy]: sortOrder,
-    },
-    include:{
-      doctorSpecialties:{
-        include:{
-          specialties:true
-        }
-      }
     }
   });
   sendResponse(res, {
     statusCode: httpCode.OK,
     success: true,
-    message: "doctor get successful",
+    message: "patient get successful",
     data: result,
     meta: {
       limit,
@@ -46,7 +39,7 @@ export const getPatient = catchAsync(async (req, res) => {
 export const getOnePatient = catchAsync(async (req, res) => {
   const id = req.params.id;
 
-  const result = await prisma.doctor.findUniqueOrThrow({
+  const result = await prisma.patient.findUniqueOrThrow({
     where: {
       id,
       isDeleted:false
@@ -55,84 +48,26 @@ export const getOnePatient = catchAsync(async (req, res) => {
   sendResponse(res, {
     statusCode: httpCode.OK,
     success: true,
-    message: "doctor get successful",
+    message: "patient get successful",
     data: result,
   });
 });
 
 export const updatePatient = catchAsync(async (req, res) => {
-  const id = req.params.id;
-  const { specialties, ...doctorData } = req.body;
-
-  const doctorInfo = await prisma.doctor.findUniqueOrThrow({
-    where: {
-      id,
-    },
-  });
-
-
-
-
-    await prisma.$transaction(async (tc) => {
-     await tc.doctor.update({
-      where: {
-        id,
-      },
-      data: doctorData,
-      include: {
-        doctorSpecialties: true,
-      },
-    });
-
-    if(specialties && specialties.length > 0){
-        //for delete
-        const deleteIds = specialties.filter((specialty:{specialtyId:string, isDeleted:boolean}) => specialty.isDeleted)
-        for(const deletedId of deleteIds){
-            await tc.doctorSpecialties.deleteMany({
-                where:{
-                    doctorId:doctorInfo.id,
-                    specialtiesId:deletedId.specialtyId
-                }
-            })
-        }
-        //for create
-        const createSpIds = specialties.filter((specialty:{specialtyId:string, isDeleted:boolean}) => !specialty.isDeleted)
-        for (const sp of createSpIds) {
-            await tc.doctorSpecialties.create({
-              data: {
-                doctorId: doctorInfo.id,
-                specialtiesId: sp.specialtyId,
-              },
-            });
-          }
-    }
-  });
-
-  const result = await prisma.doctor.findUnique({
-    where:{
-        id:doctorInfo.id
-    },
-    include:{
-        doctorSpecialties:{
-            include:{
-                specialties:true
-            }
-        }
-    }
-  })
+  
 
   sendResponse(res, {
     statusCode: httpCode.OK,
     success: true,
-    message: "doctor update successful",
-    data: result,
+    message: "patient update successful",
+    data: {},
   });
 });
 
 export const deletePatient = catchAsync(async (req, res) => {
   const id = req.params.id;
 
-  const result = await prisma.doctor.delete({
+  const result = await prisma.patient.delete({
     where: {
       id,
     },
@@ -140,12 +75,13 @@ export const deletePatient = catchAsync(async (req, res) => {
   sendResponse(res, {
     statusCode: httpCode.OK,
     success: true,
-    message: "doctor delete successful",
+    message: "patient delete successful",
     data: result,
   });
 });
+
 export const softDeletePatient = catchAsync(async (req, res) => {
-  await prisma.doctor.findUniqueOrThrow({
+  await prisma.patient.findUniqueOrThrow({
     where: {
       id: req.params.id,
       isDeleted: false,
@@ -153,7 +89,7 @@ export const softDeletePatient = catchAsync(async (req, res) => {
   });
 
   const result = await prisma.$transaction(async (tc) => {
-    const deletedDoctor = await tc.doctor.update({
+    const deletedPatient = await tc.patient.update({
       where: {
         id: req.params.id,
       },
@@ -163,18 +99,18 @@ export const softDeletePatient = catchAsync(async (req, res) => {
     });
     await tc.user.update({
       where: {
-        email: deletedDoctor.email,
+        email: deletedPatient.email,
       },
       data: {
         status: UserStatus.DELETED,
       },
     });
-    return deletedDoctor;
+    return deletedPatient;
   });
   sendResponse(res, {
     statusCode: httpCode.OK,
     success: true,
-    message: "doctor delete successful",
+    message: "patient delete successful",
     data: result,
   });
 });
