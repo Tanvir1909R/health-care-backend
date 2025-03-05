@@ -54,24 +54,84 @@ export const getOnePatient = catchAsync(async (req, res) => {
 });
 
 export const updatePatient = catchAsync(async (req, res) => {
-  
+  const {patientHealthData,medicalReport,...patientData} = req.body;
+  const patientInfo = await prisma.patient.findUniqueOrThrow({
+    where:{
+        id:req.params.id
+    }
+  })
+
+  await prisma.$transaction(async(tc)=>{
+    await tc.patient.update({
+        where:{
+            id:req.params.id
+        },
+        data: patientData
+    })
+
+    if(patientHealthData){
+      await tc.patientHealthData.upsert({
+        where:{
+          patientId:patientInfo.id
+        },
+        update:patientHealthData,
+        create: {...patientHealthData, patientId:patientInfo.id}
+      })
+    }
+    if (medicalReport) {
+      await tc.medicalReport.create({
+        data: { ...medicalReport, patientId: patientInfo.id }
+      })
+    }
+  })
+
+  const result = await prisma.patient.findUnique({
+    where: {
+      id: patientInfo.id
+    },
+    include: {
+      patientHealthData: true,
+      medicalReport: true
+    }
+  })
 
   sendResponse(res, {
     statusCode: httpCode.OK,
     success: true,
     message: "patient update successful",
-    data: {},
+    data:result,
   });
 });
 
 export const deletePatient = catchAsync(async (req, res) => {
   const id = req.params.id;
 
-  const result = await prisma.patient.delete({
-    where: {
-      id,
-    },
-  });
+  const result = await prisma.$transaction(async(tc)=>{
+    await tc.medicalReport.deleteMany({
+      where:{
+        patientId:id
+      }
+    })
+
+    await tc.patientHealthData.delete({
+      where:{
+        patientId:id
+      }
+    })
+
+    const deleteData = await tc.patient.delete({
+      where:{
+        id
+      }
+    })
+
+    await tc.user.delete({
+      where:{
+        email: deleteData.email
+      }
+    })
+    return deleteData
+  })
   sendResponse(res, {
     statusCode: httpCode.OK,
     success: true,
