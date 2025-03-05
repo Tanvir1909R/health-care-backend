@@ -29,7 +29,7 @@ app.use('/api/v1/user', userRoute)
 app.use('/api/v1/admin', adminRoute)
 app.use('/api/v1/auth', authRoute)
 app.use('/api/v1/specialties', specialtiesRoute)
-app.use('/api/v1/doctor', doctorRoute)
+app.use('/api/v1/doctors', doctorRoute)
 
 // global error handler
 app.use(globalErrorHandler)

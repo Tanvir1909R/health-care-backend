@@ -5,7 +5,7 @@ type iSearch={
 }& object
 
 const getFilterCondition = <q extends iSearch, pq extends keyof q>(queries:q, protectionQueries:pq[],searchQueries:string[],isDeleteStatusFunction:boolean) => {
-  const { search, ...filterData } = pick(queries, protectionQueries) as Record<string,any>
+  const { search,specialties,...filterData } = pick(queries, protectionQueries) as Record<string,any>
   const orCondition: any[] = [];
   if (search) {
     orCondition.push({
@@ -16,6 +16,21 @@ const getFilterCondition = <q extends iSearch, pq extends keyof q>(queries:q, pr
         },
       })),
     });
+  }
+
+  if(specialties && specialties.length > 0){
+    orCondition.push({
+      doctorSpecialties:{
+        some:{
+          specialties:{
+            title:{
+              contains:specialties,
+              mode:"insensitive"
+            }
+          }
+        }
+      }
+    })
   }
 
   if (Object.keys(filterData).length > 0) {
