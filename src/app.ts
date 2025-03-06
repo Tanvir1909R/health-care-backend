@@ -10,6 +10,7 @@ import cookieParser from 'cookie-parser'
 import { specialtiesRoute } from './app/modules/specialties/specialties.route';
 import { doctorRoute } from './app/modules/doctor/doctor.route';
 import { patientRoute } from './app/modules/patient/patient.route';
+import { scheduleRoute } from './app/modules/schedule/schedule.route';
 export const prisma = new PrismaClient();
 export const httpCode = httpStatus;
 
@@ -32,6 +33,7 @@ app.use('/api/v1/auth', authRoute)
 app.use('/api/v1/specialties', specialtiesRoute)
 app.use('/api/v1/doctors', doctorRoute)
 app.use('/api/v1/patients', patientRoute)
+app.use('/api/v1/schedule', scheduleRoute)
 
 // global error handler
 app.use(globalErrorHandler)
