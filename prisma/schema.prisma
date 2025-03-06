@@ -139,8 +139,8 @@ model DoctorSchedules {
   doctor        Doctor   @relation(fields: [doctorId], references: [id])
   scheduleId    String
   schedule      Schedule @relation(fields: [scheduleId], references: [id])
-  isBooked      Boolean
-  appointmentId String
+  isBooked      Boolean @default(false)
+  appointmentId String?
 
   @@id([doctorId, scheduleId])
   @@map("doctor_schedules")
