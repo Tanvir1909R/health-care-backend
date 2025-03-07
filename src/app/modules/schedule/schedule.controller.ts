@@ -65,27 +65,29 @@ export const createSchedules = catchAsync(async (req, res) => {
 });
 
 export const getSchedules = catchAsync(async (req, res) => {
-  const user = req.user
-  const { startDate, endDate, ...filterData } = pick(req.query,["startDate","endDate"]);
+  const user = req.user;
+  const { startDate, endDate, ...filterData } = pick(req.query, [
+    "startDate",
+    "endDate",
+  ]);
   const andCondition = [];
 
   if (startDate && endDate) {
     andCondition.push({
-      AND:[
+      AND: [
         {
-          startDateTime:{
-            gte:startDate as string
-          }
+          startDateTime: {
+            gte: startDate as string,
+          },
         },
         {
-          endDateTime:{
-            lte: endDate as string
-          }
-        }
-      ]
+          endDateTime: {
+            lte: endDate as string,
+          },
+        },
+      ],
     });
   }
-
 
   if (Object.keys(filterData).length > 0) {
     andCondition.push({
@@ -98,41 +100,71 @@ export const getSchedules = catchAsync(async (req, res) => {
   }
 
   const whereConditions: Prisma.ScheduleWhereInput =
-  andCondition.length > 0 ? { AND: andCondition } : {};
+    andCondition.length > 0 ? { AND: andCondition } : {};
 
   const doctorSchedules = await prisma.doctorSchedules.findMany({
-    where:{
-      doctor:{
-        email:user?.email
-      }
-    }
-  })
+    where: {
+      doctor: {
+        email: user?.email,
+      },
+    },
+  });
 
-  const doctorSchedulesIds = doctorSchedules.map((schedule)=> schedule.scheduleId)
-  
+  const doctorSchedulesIds = doctorSchedules.map(
+    (schedule) => schedule.scheduleId
+  );
+
   const options = pick(req.query, ["limit", "page", "sortBy", "sortOrder"]);
   const { limit, skip, sortBy, sortOrder, page } = calculatePagination(options);
   const result = await prisma.schedule.findMany({
     where: {
       ...whereConditions,
-      id:{
-        notIn:doctorSchedulesIds
-      }
+      id: {
+        notIn: doctorSchedulesIds,
+      },
     },
     skip,
-    take:limit,
-    orderBy:{
-      [sortBy]:sortOrder
-    }
+    take: limit,
+    orderBy: {
+      [sortBy]: sortOrder,
+    },
   });
   sendResponse(res, {
     statusCode: httpCode.OK,
     success: true,
     message: "schedule get successful",
-    meta:{
+    meta: {
       page,
-      limit
+      limit,
     },
+    data: result,
+  });
+});
+export const getOneSchedule = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const result = await prisma.schedule.findUnique({
+    where: {
+      id,
+    },
+  });
+  sendResponse(res, {
+    statusCode: httpCode.OK,
+    success: true,
+    message: "schedule get successful",
+    data: result,
+  });
+});
+export const deleteOneSchedule = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const result = await prisma.schedule.delete({
+    where: {
+      id,
+    },
+  });
+  sendResponse(res, {
+    statusCode: httpCode.OK,
+    success: true,
+    message: "schedule delete successful",
     data: result,
   });
 });
