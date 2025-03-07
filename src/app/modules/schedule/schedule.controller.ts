@@ -108,8 +108,7 @@ export const getSchedules = catchAsync(async (req, res) => {
     }
   })
 
-  const doctorSchedulesIds = doctorSchedules.map((schedule)=> schedule.scheduleId) 
-  console.log(doctorSchedulesIds);
+  const doctorSchedulesIds = doctorSchedules.map((schedule)=> schedule.scheduleId)
   
   const options = pick(req.query, ["limit", "page", "sortBy", "sortOrder"]);
   const { limit, skip, sortBy, sortOrder, page } = calculatePagination(options);
