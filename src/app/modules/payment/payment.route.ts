@@ -2,7 +2,7 @@ import express from "express";
 import { initPayment } from "./payment.controller";
 const route = express.Router();
 
-route.post("/init-payment", initPayment);
+route.post("/init-payment/:appointmentId", initPayment);
 
 route.get("/:id", );
 route.patch("/:id", );
