@@ -1,13 +1,25 @@
 import express from "express";
-import { createAppointment, getMyAppointment } from "./appointment.controller";
+import {
+  changeAppointmentStatus,
+  createAppointment,
+  getMyAppointment,
+} from "./appointment.controller";
 import auth from "../../middlewares/auth";
 import { UserRole } from "@prisma/client";
 const route = express.Router();
 
-route.post("/", auth(UserRole.PATIENT),createAppointment);
+route.get(
+  "/my-appointment",
+  auth(UserRole.PATIENT, UserRole.DOCTOR),
+  getMyAppointment
+);
+route.post("/", auth(UserRole.PATIENT), createAppointment);
 
-route.get("/my-appointment",auth(UserRole.PATIENT,UserRole.DOCTOR), getMyAppointment);
-route.get("/:id", );
-route.delete("/:id", );
+route.patch(
+  "/status/:id",
+  auth(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.DOCTOR),
+  changeAppointmentStatus
+);
+route.delete("/:id");
 
 export const appointmentRoute = route;

@@ -6,6 +6,7 @@ import pick from "../../globalHelperFunction/pick";
 import sendResponse from "../../globalHelperFunction/sendResponse";
 import { v4 as uuid } from "uuid";
 import { userRoute } from "../User/user.route";
+import ApiError from "../../errors/ApiError";
 
 export const createAppointment = catchAsync(async (req, res) => {
   const user = req.user;
@@ -139,3 +140,36 @@ export const getMyAppointment = catchAsync(async (req, res) => {
     },
   });
 });
+
+export const changeAppointmentStatus = catchAsync(async(req,res)=>{
+  const {id} = req.params;
+  const user = req.user;
+  const appointment = await prisma.appointment.findFirstOrThrow({
+    where:{
+      id
+    },
+    include:{
+      doctor:true
+    }
+  })
+
+  if(user?.role === UserRole.DOCTOR){
+    if(!(user.email === appointment.doctor.email)){
+      throw new ApiError(httpCode.UNAUTHORIZED,'This is not your appointment')
+    }
+  }
+
+  const result = await prisma.appointment.update({
+    where:{
+      id:appointment.id
+    },
+    data:req.body
+  })
+
+  sendResponse(res, {
+    success: true,
+    message: "appointment get successful",
+    statusCode: httpCode.OK,
+    data: result,
+  });
+})
