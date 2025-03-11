@@ -216,6 +216,4 @@ export const cancelUnpaidAppointment = async()=>{
       })
     }
   });
-  console.log(unpaidAppointments);
-  
 }
