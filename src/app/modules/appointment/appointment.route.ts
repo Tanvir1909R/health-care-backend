@@ -20,6 +20,5 @@ route.patch(
   auth(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.DOCTOR),
   changeAppointmentStatus
 );
-route.delete("/:id");
 
 export const appointmentRoute = route;

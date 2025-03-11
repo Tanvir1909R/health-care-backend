@@ -14,6 +14,8 @@ import { scheduleRoute } from './app/modules/schedule/schedule.route';
 import { doctorScheduleRoute } from './app/modules/doctorSchedule/doctorSchedule.route';
 import { appointmentRoute } from './app/modules/appointment/appointment.route';
 import { paymentRoute } from './app/modules/payment/payment.route';
+import { cancelUnpaidAppointment } from './app/modules/appointment/appointment.controller';
+import cron from 'node-cron'
 export const prisma = new PrismaClient();
 export const httpCode = httpStatus;
 
@@ -29,6 +31,10 @@ app.get('/',(req:Request,res:Response)=>{
         message:"welcome ph health care server"
     })
 })
+
+cron.schedule('* * * * *', () => {
+    cancelUnpaidAppointment()
+});
 
 app.use('/api/v1/user', userRoute)
 app.use('/api/v1/admin', adminRoute)

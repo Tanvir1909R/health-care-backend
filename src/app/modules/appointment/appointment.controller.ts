@@ -1,4 +1,4 @@
-import { Prisma, UserRole } from "@prisma/client";
+import { PaymentStatus, Prisma, UserRole } from "@prisma/client";
 import { httpCode, prisma } from "../../../app";
 import calculatePagination from "../../globalHelperFunction/calculatePagination";
 import catchAsync from "../../globalHelperFunction/catchAsync";
@@ -173,3 +173,49 @@ export const changeAppointmentStatus = catchAsync(async(req,res)=>{
     data: result,
   });
 })
+
+
+export const cancelUnpaidAppointment = async()=>{
+  const thirtyMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+  const unpaidAppointments = await prisma.appointment.findMany({
+    where:{
+      createdAt:{
+        lte: thirtyMinutesAgo
+      },
+      paymentStatus: PaymentStatus.UNPAID
+    }
+  })
+
+  const cancelAppointmentIds = unpaidAppointments.map((appointment) => appointment.id);
+
+  await prisma.$transaction(async(tx) => {
+    await tx.payment.deleteMany({
+      where: {
+        appointmentId: {
+          in: cancelAppointmentIds
+        }
+      }
+    });
+    await tx.appointment.deleteMany({
+      where:{
+        id:{
+          in: cancelAppointmentIds
+        }
+      }
+    })
+
+    for(let unpaidAppointment of unpaidAppointments){
+      await tx.doctorSchedules.updateMany({
+        where:{
+          doctorId: unpaidAppointment.doctorId,
+          scheduleId: unpaidAppointment.scheduleId
+        },
+        data:{
+          isBooked:false
+        }
+      })
+    }
+  });
+  console.log(unpaidAppointments);
+  
+}
