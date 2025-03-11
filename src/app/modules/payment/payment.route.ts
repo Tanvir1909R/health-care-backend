@@ -1,12 +1,8 @@
 import express from "express";
-import { initPayment } from "./payment.controller";
+import { initPayment, validatePayment } from "./payment.controller";
 const route = express.Router();
 
+route.get("/ipn", validatePayment);
 route.post("/init-payment/:appointmentId", initPayment);
-
-route.get("/:id", );
-route.patch("/:id", );
-route.delete("/:id", );
-route.delete("/soft/:id", );
 
 export const paymentRoute = route;

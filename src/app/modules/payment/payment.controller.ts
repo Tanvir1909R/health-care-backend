@@ -85,7 +85,7 @@ export const validatePayment = catchAsync(async(req,res)=>{
   }
 
   await prisma.$transaction(async(tc)=>{
-    await tc.payment.updateMany({
+    const paymentUpdateData = await tc.payment.update({
       where:{
         transactionId: response.data.tran_id
       },
@@ -94,5 +94,18 @@ export const validatePayment = catchAsync(async(req,res)=>{
         paymentGatewayData:response.data
       }
     })
+
+    await tc.appointment.update({
+      where:{
+        id:paymentUpdateData.appointmentId
+      },
+      data:{
+        paymentStatus:PaymentStatus.PAID
+      }
+    })
+
+    return{
+      message:"payment success"
+    }
   })
 })
