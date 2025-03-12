@@ -1,4 +1,4 @@
-import { AppointmentStatus, PaymentStatus } from "@prisma/client";
+import { AppointmentStatus, PaymentStatus, Prisma } from "@prisma/client";
 import { httpCode, prisma } from "../../../app";
 import catchAsync from "../../globalHelperFunction/catchAsync";
 import sendResponse from "../../globalHelperFunction/sendResponse";
@@ -60,3 +60,58 @@ export const createReview = catchAsync(async (req, res) => {
     data:result
   });
 });
+
+
+export const getReviews = catchAsync(async(req,res)=>{
+  const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder']);
+  const { limit, page, skip,sortBy,sortOrder } = calculatePagination(options);
+    const { patientEmail, doctorEmail } = pick(req.params,["patientEmail","doctorEmail"]);
+    const andConditions = [];
+
+    if (patientEmail) {
+        andConditions.push({
+            patient: {
+                email: patientEmail
+            }
+        })
+    }
+
+    if (doctorEmail) {
+        andConditions.push({
+            doctor: {
+                email: doctorEmail
+            }
+        })
+    }
+
+    const whereConditions: Prisma.ReviewWhereInput =
+        andConditions.length > 0 ? { AND: andConditions } : {};
+
+    const result = await prisma.review.findMany({
+        where: whereConditions,
+        skip,
+        take: limit,
+        orderBy:{
+          [sortBy]:sortOrder
+        }, 
+        include: {
+            doctor: true,
+            patient: true,
+            //appointment: true,
+        },
+    });
+    const total = await prisma.review.count({
+        where: whereConditions,
+    });
+
+    sendResponse(res, {
+      success: true,
+      message: "review get successful",
+      statusCode: httpCode.OK,
+      data:result,
+      meta: {
+        page,
+        limit,
+    }
+    });
+})
