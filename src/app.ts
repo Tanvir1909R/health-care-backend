@@ -17,6 +17,7 @@ import { paymentRoute } from './app/modules/payment/payment.route';
 import { cancelUnpaidAppointment } from './app/modules/appointment/appointment.controller';
 import cron from 'node-cron'
 import { prescriptionRoute } from './app/modules/prescription/prescription.route';
+import { reviewRoute } from './app/modules/review/review.route';
 export const prisma = new PrismaClient();
 export const httpCode = httpStatus;
 
@@ -48,6 +49,7 @@ app.use('/api/v1/doctor-schedule', doctorScheduleRoute)
 app.use('/api/v1/appointment', appointmentRoute)
 app.use('/api/v1/payment', paymentRoute)
 app.use('/api/v1/prescription', prescriptionRoute)
+app.use('/api/v1/review', reviewRoute)
 
 // global error handler
 app.use(globalErrorHandler)
