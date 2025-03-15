@@ -7,6 +7,11 @@ import pick from "../../globalHelperFunction/pick";
 import calculatePagination from "../../globalHelperFunction/calculatePagination";
 import { Prisma } from "@prisma/client";
 
+const convertDateTime = (date:Date)=>{
+  const offset = date.getTimezoneOffset() * 60000
+  return new Date(date.getTime() + offset)
+}
+
 export const createSchedules = catchAsync(async (req, res) => {
   const { startDate, endDate, startTime, endTime } = req.body;
   const currentDate = new Date(startDate);
@@ -34,9 +39,13 @@ export const createSchedules = catchAsync(async (req, res) => {
     );
 
     while (startDateTime < endDateTime) {
+      // const scheduleData = {
+      //   startDateTime: startDateTime,
+      //   endDateTime: addMinutes(startDateTime, intervalTime),
+      // };
       const scheduleData = {
-        startDateTime: startDateTime,
-        endDateTime: addMinutes(startDateTime, intervalTime),
+        startDateTime: convertDateTime(startDateTime),
+        endDateTime: convertDateTime(addMinutes(startDateTime, intervalTime)),
       };
 
       const existingSchedule = await prisma.schedule.findFirst({
