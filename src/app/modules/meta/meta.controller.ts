@@ -9,6 +9,34 @@ import catchAsync from "../../globalHelperFunction/catchAsync";
 import sendResponse from "../../globalHelperFunction/sendResponse";
 import { iUser } from "../../../types";
 
+
+
+const getBarChartData = async () => {
+  const appointmentCountByMonth = await prisma.$queryRaw`
+    SELECT DATE_TRUNC('month', "createdAt") AS month,
+          CAST(COUNT(*) AS INTEGER) AS count
+    FROM "appointment"
+    GROUP BY month
+    ORDER BY month ASC;
+  `;
+
+  return appointmentCountByMonth;
+};
+const getPiChartData = async () => {
+  const appointmentStatusDistribution = await prisma.appointment.groupBy({
+    by: ["status"],
+    _count: { id: true },
+  });
+
+  const formattedAppointmentStatusDistribution =
+    appointmentStatusDistribution.map((count) => ({
+      status: count.status,
+      count: +count._count.id,
+    }));
+
+  return formattedAppointmentStatusDistribution;
+};
+
 const getAdminMetaData = async () => {
   const appointmentCount = await prisma.appointment.count();
   const patientCount = await prisma.patient.count();
@@ -21,14 +49,20 @@ const getAdminMetaData = async () => {
     },
   });
 
+  const barChartData = await getBarChartData();
+  const barPiData = await getPiChartData();
+
   return {
     appointmentCount,
     patientCount,
     doctorCount,
     paymentCount,
     totalRevenue,
+    barChartData,
+    barPiData
   };
 };
+
 const getSuperAdminMetaData = async () => {
   const appointmentCount = await prisma.appointment.count();
   const patientCount = await prisma.patient.count();
@@ -41,6 +75,9 @@ const getSuperAdminMetaData = async () => {
       status: PaymentStatus.PAID,
     },
   });
+
+  const barChartData = await getBarChartData();
+  const barPiData = await getPiChartData();
   return {
     appointmentCount,
     patientCount,
@@ -48,6 +85,8 @@ const getSuperAdminMetaData = async () => {
     paymentCount,
     totalRevenue,
     adminCount,
+    barChartData,
+    barPiData
   };
 };
 
