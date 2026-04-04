@@ -1,9 +1,10 @@
 import express from "express";
-import { createDoctorSchedules, deleteMySchedules, getMySchedules } from "./doctorSchedule.controller";
+import { createDoctorSchedules, deleteMySchedules, getAllSchedules, getMySchedules } from "./doctorSchedule.controller";
 import auth from "../../middlewares/auth";
 import { UserRole } from "@prisma/client";
 const route = express.Router();
 
+route.get("/", auth(UserRole.DOCTOR),getAllSchedules);
 route.post("/", auth(UserRole.DOCTOR),createDoctorSchedules);
 
 route.get("/my-schedule", auth(UserRole.DOCTOR),getMySchedules);

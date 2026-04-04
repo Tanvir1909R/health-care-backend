@@ -2,8 +2,8 @@ import { Server } from "http";
 import app from "./app";
 
 function server() {
-  const server: Server = app.listen(3000, () => {
-    console.log("server is ready port:3000");
+  const server: Server = app.listen(5000, () => {
+    console.log("server is ready port:5000");
   });
 
   process.on("uncaughtException", (error) => {

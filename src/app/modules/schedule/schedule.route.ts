@@ -6,7 +6,9 @@ const route = express.Router();
 
 route.post("/", createSchedules);
 
-route.get("/",auth(UserRole.DOCTOR),getSchedules );
+route.get("/",
+    // auth(UserRole.DOCTOR),
+    getSchedules );
 route.get("/:id", getOneSchedule);
 route.delete("/:id", deleteOneSchedule);
 

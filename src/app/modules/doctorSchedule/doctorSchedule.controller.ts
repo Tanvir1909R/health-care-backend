@@ -198,10 +198,7 @@ export const getAllSchedules = catchAsync(async (req, res) => {
     },
     where: whereConditions,
     skip,
-    take: limit,
-    orderBy:{
-      [sortBy]:sortOrder
-    }
+    take: limit
   });
   sendResponse(res, {
     statusCode: httpCode.OK,

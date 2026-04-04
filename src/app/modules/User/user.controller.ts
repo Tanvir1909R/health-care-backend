@@ -239,6 +239,9 @@ export const getMyProfile = async(req:Request,res:Response,next:NextFunction)=>{
           profileInfo = await prisma.doctor.findUnique({
             where:{
               email: user.email
+            },
+            include:{
+              doctorSpecialties:true
             }
           })
           break;

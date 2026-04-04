@@ -35,7 +35,7 @@ export const loginUser: RequestHandler = catchAsync(async (req, res) => {
     env.jwt.JWT_SECRET as Secret,
     {
       algorithm: "HS256",
-      expiresIn: "30d",
+      expiresIn: "1d",
     }
   );
   const refreshToken = jwt.sign(
@@ -92,7 +92,7 @@ export const refreshToken: RequestHandler = async (req, res) => {
     env.jwt.JWT_SECRET as Secret,
     {
       algorithm: "HS256",
-      expiresIn: "30d",
+      expiresIn: "1d",
     }
   );
 
