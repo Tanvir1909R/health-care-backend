@@ -7,7 +7,8 @@ type iJsonData<D> = {
     data: D | null | undefined,
     meta?:{
         page:number,
-        limit:number
+        limit:number,
+        total?:number
     }
 }
 

@@ -7,10 +7,12 @@ import sendResponse from "../../globalHelperFunction/sendResponse";
 import { UserStatus } from "@prisma/client";
 import env from "../../env";
 import ApiError from "../../errors/ApiError";
-import emailSender from '../../globalHelperFunction/emailSender'
+import emailSender from "../../globalHelperFunction/emailSender";
+import status from "http-status";
 
 export const loginUser: RequestHandler = catchAsync(async (req, res) => {
   const data = req.body;
+
   const userData = await prisma.user.findUniqueOrThrow({
     where: {
       email: data.email,
@@ -20,11 +22,11 @@ export const loginUser: RequestHandler = catchAsync(async (req, res) => {
 
   const isCorrectPassword = await bcrypt.compare(
     data.password,
-    userData.password
+    userData.password,
   );
 
   if (!isCorrectPassword) {
-    throw new Error("password not match");
+    throw new ApiError(status.UNAUTHORIZED, "Incorrect password");
   }
 
   const accessToken = jwt.sign(
@@ -36,7 +38,7 @@ export const loginUser: RequestHandler = catchAsync(async (req, res) => {
     {
       algorithm: "HS256",
       expiresIn: "1d",
-    }
+    },
   );
   const refreshToken = jwt.sign(
     {
@@ -47,7 +49,7 @@ export const loginUser: RequestHandler = catchAsync(async (req, res) => {
     {
       algorithm: "HS256",
       expiresIn: "30d",
-    }
+    },
   );
 
   res.cookie("PHrefreshToken", refreshToken, {
@@ -71,7 +73,7 @@ export const refreshToken: RequestHandler = async (req, res) => {
   try {
     decodedData = jwt.verify(
       PHrefreshToken,
-      env.jwt.REFRESH_TOKEN_SECRET as Secret
+      env.jwt.REFRESH_TOKEN_SECRET as Secret,
     ) as JwtPayload;
   } catch (error) {
     throw new Error("you are not authorize");
@@ -93,7 +95,7 @@ export const refreshToken: RequestHandler = async (req, res) => {
     {
       algorithm: "HS256",
       expiresIn: "1d",
-    }
+    },
   );
 
   sendResponse(res, {
@@ -107,7 +109,7 @@ export const refreshToken: RequestHandler = async (req, res) => {
 };
 export const changePassword = async (
   req: Request & { user?: any },
-  res: Response
+  res: Response,
 ) => {
   const user = req.user;
   const bodyData = req.body;
@@ -123,7 +125,7 @@ export const changePassword = async (
 
   const isCorrectPassword = await bcrypt.compare(
     bodyData.oldPassword,
-    userData.password
+    userData.password,
   );
 
   if (!isCorrectPassword) {
@@ -158,28 +160,37 @@ export const forgetPassword: RequestHandler = catchAsync(async (req, res) => {
       status: UserStatus.ACTIVE,
     },
   });
+  
   if (!userData) {
     throw new ApiError(httpCode.NOT_FOUND, "user not found");
   }
   const resetPassToken = jwt.sign(
-    { email: userData.email, role: userData.role },
+    { vemail: userData.email, role: userData.role },
     env.jwt.RESET_PASSWORD_TOKEN as Secret,
     {
       algorithm: "HS256",
       expiresIn: "5m",
-    }
+    },
   );
-  const resetLink = `${env.RESET_PASSWORD_LINK}?email=${userData.email}&uid=${userData.id}&token=${resetPassToken}`;
-  console.log(resetLink);
-  await emailSender(userData.email,`
+  const resetLink = `${env.RESET_PASSWORD_LINK}?uid=${userData.id}&token=${resetPassToken}`;
+  await emailSender(
+    userData.email,
+    `
     
       <div>
-        <a href="${resetLink}">
-          <button>Reset link</button>
-        </a>
-      </div>
-    `)
-  
+            <p>Dear User,</p>
+            <p>Your password reset link 
+                <a href=${resetLink}>
+                    <button>
+                        Reset Password
+                    </button>
+                </a>
+            </p>
+
+        </div>
+    `,
+  );
+
   sendResponse(res, {
     success: true,
     statusCode: httpCode.OK,
@@ -188,36 +199,39 @@ export const forgetPassword: RequestHandler = catchAsync(async (req, res) => {
   });
 });
 
-export const resetPassword:RequestHandler = catchAsync(async (req,res)=>{
-  const token = req.headers.authorization || '';
+export const resetPassword: RequestHandler = catchAsync(async (req, res) => {
+  const token = req.headers.authorization || "";
   const data = req.body;
   const userData = await prisma.user.findUniqueOrThrow({
-    where:{
-      id:data.id,
-      status:UserStatus.ACTIVE
-    }
-  })
+    where: {
+      id: data.id,
+      status: UserStatus.ACTIVE,
+    },
+  });
   if (!userData) {
     throw new ApiError(httpCode.NOT_FOUND, "user not found");
   }
-  const isValidToken = jwt.verify(token,env.jwt.RESET_PASSWORD_TOKEN as Secret)
+  const isValidToken = jwt.verify(
+    token,
+    env.jwt.RESET_PASSWORD_TOKEN as Secret,
+  );
   if (!isValidToken) {
     throw new ApiError(httpCode.FORBIDDEN, "Forbidden");
   }
 
   const hashPassword = bcrypt.hashSync(data.password, 12);
   await prisma.user.update({
-    where:{
-      id:data.id
+    where: {
+      id: data.id,
     },
-    data:{
-      password:hashPassword
-    }
-  })
+    data: {
+      password: hashPassword,
+    },
+  });
   sendResponse(res, {
     success: true,
     statusCode: httpCode.OK,
     message: "reset done",
     data: null,
   });
-})
+});

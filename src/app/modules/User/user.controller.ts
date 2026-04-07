@@ -8,7 +8,6 @@ import calculatePagination from "../../globalHelperFunction/calculatePagination"
 import pick from "../../globalHelperFunction/pick";
 import sendResponse from "../../globalHelperFunction/sendResponse";
 import catchAsync from "../../globalHelperFunction/catchAsync";
-import status from "http-status";
 
 export const createAdmin: RequestHandler = async (req, res) => {
   try {

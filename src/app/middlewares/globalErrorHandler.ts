@@ -2,8 +2,9 @@ import { PrismaClientKnownRequestError, PrismaClientValidationError } from "@pri
 import { ErrorRequestHandler } from "express";
 import httpStatus from "http-status";
 import { httpCode } from "../../app";
+import ApiError from "../errors/ApiError";
 const globalErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
-  let statusCode = httpStatus.INTERNAL_SERVER_ERROR;
+  let statusCode;
   let success = false;
   let message = "Something went wrong!";
   let error = err;
@@ -13,14 +14,20 @@ const globalErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
     success = false
     message = "validation error"
     error = err.message
-  }
-  if(err instanceof PrismaClientKnownRequestError){
+  }else if(err instanceof PrismaClientKnownRequestError){
     if(err.code === "P2002"){
+      statusCode = httpCode.BAD_REQUEST;
       message = "Duplicate field error",
       error = err.meta
     }
+  }else if(err instanceof ApiError){
+    if(err.message === "Incorrect password"){
+      statusCode = err.statusCode;
+      message = err.message
+    }
+    
   }
-  res.status(statusCode).json({
+  res.status(statusCode ? statusCode : 500).json({
     success,
     message,
     error

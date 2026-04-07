@@ -59,7 +59,11 @@ export const getOneDoctor = catchAsync(async (req, res) => {
       isDeleted: false,
     },
     include: {
-      doctorSpecialties: true,
+      doctorSpecialties: {
+        include:{
+          specialties:true
+        }
+      }
     },
   });
   sendResponse(res, {

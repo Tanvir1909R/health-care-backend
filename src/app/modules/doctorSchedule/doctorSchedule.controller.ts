@@ -90,11 +90,25 @@ export const getMySchedules = catchAsync(async (req, res) => {
   const options = pick(req.query, ["limit", "page", "sortBy", "sortOrder"]);
   const { limit, skip, sortBy, sortOrder, page } = calculatePagination(options);
   const result = await prisma.doctorSchedules.findMany({
-    where: whereConditions,
+    where: {
+      doctor:{
+        email:user?.email
+      },
+      ...whereConditions
+    },
     skip,
     take: limit,
     include: {
       schedule: true,
+    },
+  });
+
+  const total = await prisma.doctorSchedules.count({
+    where: {
+      doctor:{
+        email:user?.email
+      },
+      ...whereConditions
     },
   });
   sendResponse(res, {
@@ -104,6 +118,7 @@ export const getMySchedules = catchAsync(async (req, res) => {
     meta: {
       page,
       limit,
+      total,
     },
     data: result,
   });
@@ -131,7 +146,7 @@ export const deleteMySchedules = catchAsync(async (req, res) => {
   if (isBookedSchedule) {
     throw new ApiError(
       httpCode.BAD_REQUEST,
-      "can not delete the booked schedule"
+      "can not delete the booked schedule",
     );
   }
 
@@ -152,9 +167,13 @@ export const deleteMySchedules = catchAsync(async (req, res) => {
 });
 
 export const getAllSchedules = catchAsync(async (req, res) => {
-  const { search, ...filterData } = pick(req.query,["search","isBooked","doctorId"]);
-  const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder']);
-  const { limit, page, skip,sortBy,sortOrder } = calculatePagination(options);
+  const { search, ...filterData } = pick(req.query, [
+    "search",
+    "isBooked",
+    "doctorId",
+  ]);
+  const options = pick(req.query, ["limit", "page", "sortBy", "sortOrder"]);
+  const { limit, page, skip, sortBy, sortOrder } = calculatePagination(options);
   const andConditions = [];
 
   if (search) {
@@ -198,16 +217,16 @@ export const getAllSchedules = catchAsync(async (req, res) => {
     },
     where: whereConditions,
     skip,
-    take: limit
+    take: limit,
   });
   sendResponse(res, {
     statusCode: httpCode.OK,
     success: true,
     message: "schedule get successful",
     data: result,
-    meta:{
+    meta: {
       limit,
-      page
-    }
+      page,
+    },
   });
 });
