@@ -5,7 +5,7 @@ import { UserRole } from "@prisma/client";
 const route = express.Router();
 
 route.get("/", 
-    // auth(UserRole.DOCTOR),
+    // auth(UserRole.DOCTOR, UserRole.ADMIN, UserRole.PATIENT, UserRole.SUPER_ADMIN),
     getAllSchedules);
 route.post("/", auth(UserRole.DOCTOR),createDoctorSchedules);
 

@@ -51,17 +51,19 @@ export const initPayment = catchAsync(async (req, res) => {
         ship_postcode: 1000,
         ship_country: 'Bangladesh',
     };
+    
     const response = await axios ({
         method:"post",
         url: env.ssl.SSL_PAYMENT_API,
         data:data,
         headers: {"Content-Type":"application/x-www-form-urlencoded"}
     })
+    console.log(response.data);
     
   sendResponse(res, {
     statusCode: httpCode.OK,
     success: true,
-    message: "payment successful",
+    message: "payment init successful",
     data: {
       paymentUrl:response.data.GatewayPageURL
     },
@@ -71,7 +73,7 @@ export const initPayment = catchAsync(async (req, res) => {
 
 export const validatePayment = catchAsync(async(req,res)=>{
   const query = req.query;
-  if(!query || query.status || !(query.status === 'VALID')){
+  if(!query || !query.status || !(query.status === 'VALID')){
     throw new ApiError(httpCode.BAD_REQUEST,'invalid payment')
   }
 

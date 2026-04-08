@@ -167,8 +167,10 @@ export const deleteMySchedules = catchAsync(async (req, res) => {
 });
 
 export const getAllSchedules = catchAsync(async (req, res) => {
-  const { search, ...filterData } = pick(req.query, [
+  const { search,startDate,endDate, ...filterData } = pick(req.query, [
     "search",
+    "startDate",
+    "endDate",
     "isBooked",
     "doctorId",
   ]);
@@ -184,6 +186,27 @@ export const getAllSchedules = catchAsync(async (req, res) => {
           mode: "insensitive",
         },
       },
+    });
+  }
+
+  if (startDate && endDate) {
+    andConditions.push({
+      AND: [
+        {
+          schedule: {
+            startDateTime: {
+              gte: startDate as string,
+            },
+          },
+        },
+        {
+          schedule: {
+            endDateTime: {
+              lte: endDate as string,
+            },
+          },
+        },
+      ],
     });
   }
 
